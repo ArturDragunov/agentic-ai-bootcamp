@@ -7,3 +7,8 @@ langchain-core
 langchain-community
 defusedxml
 duckduckgo-search
+pypdf
+bs4
+arxiv
+pymupdf
+wikipedia
