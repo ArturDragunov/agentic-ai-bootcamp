@@ -16,3 +16,13 @@ faiss-cpu
 langchain_google_genai
 langchain_huggingface
 langchain-pinecone
+pandas
+openai
+pymongo
+pillow
+pdfplumber
+tqdm
+camelot-py[base]==1.0.0
+langchain-mongodb
+pymongo
+marimo[recommended]

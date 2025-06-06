@@ -1,0 +1,113 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+<cursorrules_instructions_to_the_dialog>
+
+<cursorrules_code_style>
+- Comments in English only
+- Prefer functional programming over OOP
+- Use separate OOP classes only for connectors and interfaces to external systems
+- Write all other logic with pure functions (clear input/output, no hidden state changes)
+- Functions must ONLY modify their return values - never modify input parameters, global state, or any data not explicitly returned
+- Make minimal, focused changes
+- Follow DRY, KISS, and YAGNI principles
+- Use strict typing (function returns, variables) in all languages
+- Use named parameters in function calls when possible
+- No duplicate code; check if some logic is already written before writing it
+- Avoid unnecessary wrapper functions without clear purpose
+- Prefer strongly-typed collections over generic ones when dealing with complex data structures
+- Consider creating proper type definitions for non-trivial data structures
+- Native types are fine for simple data structures, but use proper models for complex ones
+- Try to avoid using untyped variables and generic types where possible
+- Never use default parameter values in function definitions - make all parameters explicit
+</cursorrules_code_style>
+
+<cursorrules_error_handling>
+- Always raise errors explicitly, never silently ignore them
+- If an error occurs in any logical part of code, raise it immediately and do not continue execution
+- Use specific error types that clearly indicate what went wrong
+- Avoid catch-all exception handlers that hide the root cause
+- Error messages should be clear and actionable
+- Log errors with appropriate context before raising them
+</cursorrules_error_handling>
+
+<cursorrules_python_specifics>
+- Prefer Pydantic over TypedDict for data models (e.g., `class ContactData(BaseModel): ...`)
+- Avoid `Any` and `@staticmethod`
+- For complex structures, avoid generic collections like `List[Dict[str, Any]]`
+- Raise specific exceptions like `ValueError` or `TypeError` instead of generic `Exception`
+- Only use classes for clients that connect to external systems (e.g., `NotionClient`)
+- For business logic, use pure functions with client as first parameter: `def change(notion_client: NotionClient, param1: str, param2: int) -> Result:`
+</cursorrules_python_specifics>
+
+<cursorrules_data_science_specific>
+- Prioritize readability and performance in data analysis workflows
+- Use method chaining
+- Prefer vectorized operations over loops
+- Use descriptive variable names
+- Follow PEP 8 with 2-space indentation
+
+Data Analysis and Manipulation:
+- Use polars for data manipulation, not pandas
+- Leverage lazy evaluation when appropriate
+- Use expressions API for optimal performance
+- Utilize polars' efficient group_by operations
+
+Error Handling and Data Validation:
+- Implement data quality checks early
+- Handle missing data appropriately
+- Validate data types and ranges
+
+Performance Optimization:
+- Use polars' lazy evaluation for larger datasets
+- Utilize parallel execution capabilities
+- Profile code to identify bottlenecks
+</cursorrules_data_science_specific>
+
+<cursorrules_libraries_and_dependencies>
+- Install in virtual environments, not globally
+- Add to project configs, not one-off installs
+- Use source code exploration for understanding
+- Prefer project-level dependency management over individual package installation:
+  - GOOD: `uv pip install -r requirements.txt`
+- When adding dependencies, update the appropriate project configuration file, not just the environment
+</cursorrules_libraries_and_dependencies>
+
+<cursorrules_terminal_usage>
+- Run `date` for date-related tasks
+- Use GitHub CLI with `printf` for multiline text:
+  `git commit -m "$(printf "Title\n\n- Point 1\n- Point 2")"`
+- Always use non-interactive git diff commands with: `git --no-pager diff` or `git diff | cat`. NO `git diff` or `git diff --cached`.
+- Always prefer commands with parameters that don't require user interaction over interactive ones (use flags, environment variables, or configuration files to avoid prompts)
+</cursorrules_terminal_usage>
+
+<cursorrules_planning_practices>
+- User can ask you to create a plan for the feature implementation
+- You MUST create a temp directory
+- You MUST create a markdown file with the feature plan in the temp directory
+- This feature plan file must contain the following sections:
+  1. Overview of current state related to the feature
+  2. Overview of the final state of the feature
+  3. List of all files to change with text description of what to change (not a code)
+  4. Checklist of all tasks that need to be done in 2-level markdown checkbox style
+- This feature plan file MUST be minimalistic and contain only the most important minimal changes related to the feature, all additional changes can be described as ideas in additional section, but MUST NOT be implemented if user didn't ask for them
+</cursorrules_planning_practices>
+
+<cursorrules_repository_practices>
+- Read `README.md` if there is no `.cursorrules` file
+- Summarize project before working on it
+</cursorrules_repository_practices>
+
+<cursorrules_code_changes>
+- You MUST respect existing code style and patterns if the user didn't specify otherwise
+- You MUST suggest only minimal changes related to current user dialog
+- You MUST change as few lines as possible while solving the problem
+- You MUST focus only on what the user is asking for in the current dialog, no extra improvements
+- You MUST understand the existing codebase before suggesting changes
+- You MUST start with reading related files and codebase before suggesting changes
+</cursorrules_code_changes>
+
+</cursorrules_instructions_to_the_dialog>
+      
