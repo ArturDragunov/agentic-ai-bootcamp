@@ -30,7 +30,7 @@ hugging_face_embedding/
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
-
+2-Langchain Basics/2.4-VectorDatabase/assignment/extracted/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
