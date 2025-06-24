@@ -36,3 +36,4 @@ youtube_search
 langgraph
 chromadb
 langchain-chroma
+yfinance
