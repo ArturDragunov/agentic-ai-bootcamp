@@ -39,3 +39,7 @@ langchain-chroma
 yfinance
 langchain_experimental
 matplotlib
+autogen-agentchat
+autogen-core
+autogen-ext
+tiktoken
