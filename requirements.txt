@@ -43,3 +43,4 @@ autogen-agentchat
 autogen-core
 autogen-ext
 tiktoken
+langgraph-supervisor
