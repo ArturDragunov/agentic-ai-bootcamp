@@ -28,7 +28,7 @@ medical_researcher = create_react_agent(
       ALWAYS search for the most recent and current information from 2025.
       When searching, include current date context ({current_date}) in your queries.
       Look for the latest available (based on the current date) information from the internet using search_tool.
-      Prepare a summary for a research topic given to you as detailed as possible.""",
+      Conduct a deep research and prepare a summary for a research topic given to you as detailed as possible.""",
     name="medical_researcher"
 )
 
@@ -40,7 +40,7 @@ financial_researcher = create_react_agent(
       ALWAYS search for the most recent and current information from 2025.
       When searching, include current date context ({current_date}) in your queries.
       Look for the latest available (based on the current date) information from the internet using search_tool.
-      Prepare a summary for a research topic given to you as detailed as possible.""",
+      Conduct a deep research and prepare a summary for a research topic given to you as detailed as possible.""",
     name="financial_researcher"
 )
 
@@ -67,78 +67,38 @@ research_supervisor = create_supervisor(
 # ### Word tool
 
 # %%
-# tools/docx_tool.py
-
-import os
-from datetime import datetime
-from typing import List, Tuple
-
+from langchain.tools import tool
+from typing import List, TypedDict
 from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from datetime import datetime
+import os
 
-from langchain_core.tools import tool
+class Section(TypedDict):
+    heading: str
+    body: str
 
-
-def _add_sections(
-    doc: Document,
-    items: List[Tuple[str, str]]
-) -> None:
-    """Helper to append heading/body sections and separators."""
-    for idx, (heading, body) in enumerate(items, start=1):
-        doc.add_heading(f"{heading}", level=2)
-        for para in body.split("\n\n"):
-            p = doc.add_paragraph(para.strip())
-            if p.style and hasattr(p.style, "font"):
-                p.style.font.size = Pt(11)
-        if idx < len(items):
-            doc.add_paragraph("─" * 50)
-
-
-@tool(
-    description=(
-        "Given either a single (heading, body) tuple or a list of such tuples, "
-        "creates (or appends to) a .docx file in the current working directory. "
-    )
-)
+@tool
 def render_to_docx_tool(
-    data: str,
-    title: str = "Research Report", 
+    sections: List[Section],
+    title: str = "Research Report",
     output_filename: str = None
 ) -> str:
-    # --- Determine filename & path ---
-    cwd = os.getcwd()
-    if output_filename:
-        fn = output_filename if output_filename.endswith(".docx") else output_filename + ".docx"
-    else:
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        fn = f"report_{ts}.docx"
-    output_path = os.path.join(cwd, fn)
+    """
+    Converts a list of sections into a Word document. Each section must be a dict with 'heading' and 'body'.
+    Returns the saved file path.
+    """
+    doc = Document()
+    doc.add_heading(title, 0)
+    doc.add_paragraph(f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-    # --- Load or create document ---
-    if os.path.exists(output_path):
-        doc = Document(output_path)
-        doc.add_paragraph("═" * 60)
-        doc.add_paragraph()
-    else:
-        doc = Document()
-        if title:
-            h = doc.add_heading(title, level=1)
-            h.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    for section in sections:
+        doc.add_heading(section["heading"], level=2)
+        for para in section["body"].split("\n\n"):
+            doc.add_paragraph(para.strip())
 
-    # --- Timestamp ---
-    ts_para = doc.add_paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    ts_para.style = "Intense Quote"
-
-    # --- Normalize & add content ---
-    items = [data] if isinstance(data, tuple) else data
-    _add_sections(doc, items)
-
-    # --- Save ---
-    doc.save(output_path)
-    print(f"Document saved to: {output_path}")
-    return f"Document successfully saved to: {output_path}"
-
+    filename = output_filename or f"report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.docx"
+    doc.save(filename)
+    return os.path.abspath(filename)
 
 # %%
 from langchain_openai import ChatOpenAI
@@ -162,23 +122,21 @@ report_summariser = create_react_agent(
 )
 
 report_saver = create_react_agent(
-    model=ChatOpenAI(model = os.getenv('LLM_MODEL')),
+    model=ChatOpenAI(model=os.getenv('LLM_MODEL')),
     tools=[render_to_docx_tool],
     prompt="""You are a report saving specialist.
-      Your colleague prepared a Word-friendly report for you.
-      You MUST use the render_to_docx_tool to save it as a Word document.
-      Do not claim success without actually calling the tool.
-      After using the tool, confirm the file path to your supervisor.""",
-    name="report_saver"
+    You receive a structured report (a list of sections as (heading, body) tuples).
+    Use the `render_to_docx_tool` to save it as a Word document.
+    After saving, return the file path.""",
+  name="report_saver"
 )
+
 
 reporting_supervisor = create_supervisor(
     agents=[report_summariser, report_saver],
     model=ChatOpenAI(model = os.getenv('LLM_MODEL')),
     prompt=(
-        f"""You manage a reporting team responsible for preparation of the output from research team into a Word-friendly format which later is saved into Word document.
-        Current date: {current_date}
-        Ensure all reports include proper date context and current information as of {current_date}.
+        """You manage a reporting team responsible for preparation of the output from research team into a Word-friendly format which later is saved into Word document.
         After your report_saver worker lets you know that the task is done, let head_supervisor know about that.
         IMPORTANT: Always delegate to report_saver for actual file saving.
         Do not attempt to save files yourself."""
@@ -193,7 +151,7 @@ from typing import Literal
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.types import Command
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from typing import TypedDict
 
 class Router(TypedDict):
@@ -237,16 +195,16 @@ def research_team_node(state: MessagesState) -> Command[Literal["head_supervisor
   result = research_supervisor.invoke(state)
   return Command(
     goto="head_supervisor",
-    update={"messages": [HumanMessage(content=f"Research complete: {result}")]}
+    update={"messages": [AIMessage(content=f"Research complete: {result}")]}
   )
 
 # Report team wrapper  
 def report_team_node(state: MessagesState) -> Command[Literal["head_supervisor"]]:
   # Use your existing reporting_supervisor here
-  reporting_supervisor.invoke(state)
+  result = reporting_supervisor.invoke(state)
   return Command(
     goto="head_supervisor", 
-    update={"messages": [HumanMessage(content="Report saved successfully")]}
+    update={"messages": [AIMessage(content=f"Report saved successfully: {result}")]}
   )
 
 # Build the graph
